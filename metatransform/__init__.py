@@ -1,1 +1,2 @@
+from metatransform.v1.metatransform_v1 import MetaTransformV1
 from metatransform.metatransform import MetaTransform

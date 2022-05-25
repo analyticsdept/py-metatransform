@@ -1,115 +1,45 @@
 from metatransform import MetaTransform
 import json
 
-transform = MetaTransform()
+def pass_in_function(data=None, *args, **kwargs):
+    # data = kwargs.get('data', None)
+    return f"here's your data >>> {str(data)}"
 
-data = {
-    'id': '1234abc',
-    'params': [{
-        'key': 'lift_to_root',
-        'value': {'int': 1234}
-    }, {
-        'key': 'rename_key',
-        'value': 5678
-    }],
-    'cast_to_string': {
-        '_dict': {'a': 'b', 'c': 'd'},
-        '_list': ['a','b','c','d'],
-        '_int': 1000,
-        '_bool': False
-    },
-    'filter_this_out': '...',
-    'last': 12
-}
+def multiply_by_x(data=None, *args, **kwargs):
+    # data = kwargs.get('data', None)
+    x = kwargs.get('x', 0)
+    return data * x
 
-chain = [ 
-    {
-        "lift_value": {
-            "params": [{
-                "value": {
-                    "_lift": "integer"
-                }
-            }]
-        }
-    }, {
-        "key_value_collapse": {
-            "key_field": {
-                "params": [
-                    "key"
-                ]
-            },
-            "value_field": {
-                "params": [
-                    "value"
-                ]
-            },
-            "target_field": "*"
-        }
-    }, {
-        "cast_string": {"cast_to_string": "_dict"}
-    }, {
-        "cast_string": {"cast_to_string": "_list"}
-    }, {
-        "cast_string": {"cast_to_string": "_int"}
-    }, {
-        "cast_string": {"cast_to_string": "_bool"}
-    }, {
-        "filter_subset_blacklist": ["filter_this_out"]
-    }
-]
-
-chain = [
-        {
-            "filter_subset_blacklist": ["filter_this_out", "last"]
-        }, 
-        {
-            "key_value_collapse": {
-                "key_field": {
-                    "params": [
-                        "key"
-                    ]
-                },
-                "value_field": {
-                    "params": [
-                        "value"
-                    ]
-                },
-                "target_field": "*"
-            }
-        },
-        {
-            "filter_subset_blacklist": ["params"]
-        },
-        {
-            "remap_fields": {
-                "cast_to_string": {
-                    "_dict": {
-                        "_type": "string"
-                    },
-                    "_list": {
-                        "_type": "string"
-                    },
-                    "_int": {
-                        "_type": "string"
-                    },
-                    "_bool": {
-                        "_type": "string"
-                    }
-                },
-                "rename_key": {
-                    "_name": "new_key"
-                }
-            }
-        }, 
-        {
-            "lift_value": {
-                "lift_to_root": {
-                    "_lift": "int"
-                }
-            }
-        },
+data = [
+        {'v': 'b', 'c': 'd', 'x': {'a': 10}, 'y': {'b': [1,2,3,4], 'c': {'g':'h'}, 'd': {'word': 'yo', 'xx': 'no'}}}, 
+        {'v': 'e', 'c': 'f', 'z': [{'x': 5, 'y': 10}, {'x': 20, 'y': 205}]}
     ]
 
-result = transform.transform(data, chain)
+routines = {
+        'r1': [{'function': 'rrrr', 'value': 'routine 1 rrr'}], 
+        'r2': [
+            {'function': 'cc', 'map': {'_c': {'__modify': True}}, 'options': {'create': True}}, 
+            {'function': 'deep', 'value': 'hellooooooo', 'map': {'x': {'__modify': True}}}
+        ]
+    }
 
-print(json.dumps(result, indent=4))
+transforms = [
+        {'function': 'r1'},
+        {'function': 'r2'},
+        {'function': pass_in_function, 'map': {'v': {'__modify': True}}},
+        {'function': multiply_by_x, 'map': {
+                'z': [{
+                    'x': {'__modify': True, 'x': 10},
+                    'y': {'__modify': True, 'x': 5}
+                }]
+            }
+        },
+        {'function': 'whatver', 'options': {'my_opt1': 1, 'text': 'WORDDDDD???'}},
+        {'function': 'flatten', 'map': {'y': {'b': {'__modify': True}, 'c': {'__modify': True}, 'd': {'__modify': True}}}}
+    ]
+
+x = MetaTransform(transforms=transforms, routines=routines)
+
+x.run(data)
+
+print(json.dumps(data, indent=4))
